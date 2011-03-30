@@ -1,0 +1,9 @@
+; $Id$
+name = OGDI Field
+description = Defines a field for embedding an OGDI dataset in a node
+dependencies[] = content
+dependencies[] = jquery_update
+dependencies[] = jquery_ui
+package = CCK
+core = 6.x
+php = 5.1
