@@ -1,9 +1,9 @@
 ; $Id$
 name = OGDI Field
-description = Defines a field for embedding an OGDI dataset in a node
-dependencies[] = content
+description = Defines a link field formatter for displaying an OGDI dataset in a node
+dependencies[] = field
+dependencies[] = link
 dependencies[] = jquery_update
-dependencies[] = jquery_ui
 package = CCK
-core = 6.x
+core = 7.x
 php = 5.1

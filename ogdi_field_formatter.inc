@@ -16,32 +16,33 @@
  * $element['#delta']: the delta of this item, like '0',
  * 
  */
-function theme_ogdi_field_formatter_default($element) {
+function theme_ogdi_field_formatter_default($variables) {
   $output = '';
   // If there is a dataset to load 
-  if (!empty($element['#item']['value'])) {
+  if (!empty($variables['display_url'])) {
 
     /* Add the necessary javascript and css files...*/
     /* Jquery UI */
-    drupal_add_css(drupal_get_path('module', 'jquery_ui') ."/jquery.ui/themes/base/ui.all.css", 'module', 'all');
-  
+    drupal_add_library('system', 'ui.tabs');
+    drupal_add_library('system', 'ui.dialog');
+
     /* DataTables CSS and JS */
-    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/js/jquery.dataTables.min.js', 'module');
-    drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table.css', 'module', 'all');
-    drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table_jui.css', 'module', 'all');
+    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/js/jquery.dataTables.min.js', array('type' => 'file', 'group' => JS_LIBRARY));
+    drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table.css', array('type' => 'file', 'media' => 'all'));
+    drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table_jui.css', array('type' => 'file', 'media' => 'all', 'group' => JS_LIBRARY));
   
     /* Add bing maps stuff */
-    drupal_set_html_head('<script type="text/javascript" src="http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.3"></script>');
-  
+    drupal_add_js('http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.3', array('type' => 'external', 'group' => JS_LIBRARY));
+    
     /* OGDI Stuff */
-    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/js/ogdi_field.js', 'module');
-    drupal_add_css(drupal_get_path('module', 'ogdi_field') ."/css/ogdi_field.css", 'module', 'all');
+    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/js/ogdi_field.js', array('type' => 'file'));
+    drupal_add_css(drupal_get_path('module', 'ogdi_field') ."/css/ogdi_field.css", array('type' => 'file', 'media' => 'all'));
   
     /* Reset the sticky table headers - see theme_ogdi_field_container() */
-    drupal_add_js('$("table.no-sticky thead").addClass("tableHeader-processed");', 'inline', 'footer');
+    //drupal_add_js('$("table.no-sticky thead").addClass("tableHeader-processed");', array('type' => 'inline', 'scope' => 'header'));
 
     // Filter out any harmful stuff
-    $field_url = filter_xss($element['#item']['safe']);
+    $field_url = filter_xss($variables['display_url']);
     
     // Get the ID of the actual Dataset, should be the last element in the array
     $url = parse_url($field_url);
@@ -53,7 +54,7 @@ function theme_ogdi_field_formatter_default($element) {
     
     // Create a new instance of OGDI object
     $ogdi = ogdi_field_ogdi($datasource, $dataset_id);
-    
+
     // Get the schema (column names) of the dataset
     $schema = ogdi_field_get_metadata($ogdi);
     
@@ -68,11 +69,11 @@ function theme_ogdi_field_formatter_default($element) {
     $rows = ogdi_field_build_table($data->d, $headers);
         
     // Build the filter form
-    $filter_form = drupal_get_form('ogdi_field_filter_form', $ogdi, $element);
-    $output .= $filter_form;
+    //$filter_form = drupal_get_form('ogdi_field_filter_form', $ogdi, $element);
+    //$output .= $filter_form;
     
     // Theme the container
-    $output .= theme('ogdi_field_container', $ogdi, $headers, $rows, $parameters);
+    $output .= theme('ogdi_field_container', array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters));
   } 
   return $output;
 }
@@ -96,7 +97,7 @@ function theme_ogdi_field_formatter_link($element) {
 /**
  * Theme function for OGDI data grid and Map in tabs
  */
-function theme_ogdi_field_container($ogdi, $headers, $rows, $parameters) {
+function theme_ogdi_field_container($variables) {
   // Add the jQuery tabs functionality
   if (module_exists('jquery_ui')) {
     jquery_ui_add('ui.tabs');
@@ -111,11 +112,11 @@ function theme_ogdi_field_container($ogdi, $headers, $rows, $parameters) {
       $output .= '</ul>'. chr(10);
       // Output the data table...
       $output .= '<div id="ogdi-data">' . chr(10);
-      $output .= theme('ogdi_field_datatable', $headers, $rows, $ogdi->datasource, $ogdi->dataset_id, $parameters);
+      $output .= theme('ogdi_field_datatable', array('headers' => $variables['headers'], 'rows' => $variables['rows'], 'datasource' => $variables['ogdi']->datasource, 'dataset_id' => $variables['ogdi']->dataset_id, 'parameters' => $variables['parameters']));
       $output .= '</div>' . chr(10);
       // Output the map...
       $output .= '<div id="ogdi-map">' . chr(10);
-      $output .= theme('ogdi_field_map', $ogdi->datasource, $ogdi->dataset_id, $parameters);
+      $output .= theme('ogdi_field_map', array('datasource' => $variables['ogdi']->datasource, 'dataset_id' => $variables['ogdi']->dataset_id, 'parameters' => $variables['parameters']));
       $output .= '</div>' . chr(10);
     $output .= '</div>' . chr(10);
   $output .= '</div>' . chr(10);
@@ -126,8 +127,8 @@ function theme_ogdi_field_container($ogdi, $headers, $rows, $parameters) {
 /**
  * Theme function for the OGDI data grid
  */
-function theme_ogdi_field_datatable($headers, $rows, $datasource, $dataset_id, $parameters) {
-  foreach ($parameters as $key => $value) {
+function theme_ogdi_field_datatable($variables) {
+  foreach ($variables['parameters'] as $key => $value) {
       if ($value == 'json') {
         continue;
       }
@@ -135,17 +136,22 @@ function theme_ogdi_field_datatable($headers, $rows, $datasource, $dataset_id, $
     }
  
   // Output the Path to the ATOM Feed API
-  $output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
+ // $output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
 
   // Output the Download select box
-  $output .= theme('ogdi_field_download_link', $datasource, $dataset_id, $querystring);
+ // $output .= theme('ogdi_field_download_link', $datasource, $dataset_id, $querystring);
   
   // If no data is returned...
-  if (count($rows) == 0) {
+  if (count($variables['rows']) == 0) {
     $output = '<div id="ogdi-datagrid">' . t('No data could be found, please try again') . '</div>';
   } 
   else {      
-    $output .= theme('table', $headers, $rows, $attributes = array('id' => 'ogdi-datagrid', 'class' => 'no-sticky'));
+    $output .= theme('table', array(
+      'header' => $variables['headers'],
+      'rows' => $variables['rows'],
+      'attributes' => array('id' => 'ogdi-datagrid', 'class' => array('no-sticky'))
+      )
+    );
   }
   return $output;
 }
@@ -154,18 +160,18 @@ function theme_ogdi_field_datatable($headers, $rows, $datasource, $dataset_id, $
 /**
  * Theme function for the OGDI Map
  */
-function theme_ogdi_field_map($datasource, $dataset_id, $parameters) {
-  $parameters['format'] = 'kml';
-  foreach ($parameters as $key => $value) {
+function theme_ogdi_field_map($variables) {
+  $variables['parameters']['format'] = 'kml';
+  foreach ($variables['parameters'] as $key => $value) {
       $string[] = $key .'='. urlencode($value);
     }
   $querystring = implode('&', $string);
   
   // Output the Path to the ATOM Feed API
-  $output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
+  //$output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
   
   $output .= '<div id="bing-map">';
-  $output .= $datasource . '/' . $dataset_id .'?'. $querystring .'</div>';
+  $output .= $variables['datasource'] . '/' . $variables['dataset_id'] .'?'. $querystring .'</div>';
   return $output;
 }
 

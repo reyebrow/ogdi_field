@@ -12,7 +12,7 @@
  * Implementation of hook_install().
  */
 function ogdi_field_install() {
-  drupal_load('module', 'content');
+  drupal_load('module', 'field');
   content_notify('install', 'ogdi_field');
 }
 
@@ -20,7 +20,7 @@ function ogdi_field_install() {
  * Implementation of hook_uninstall().
  */
 function ogdi_field_uninstall() {
-  drupal_load('module', 'content');
+  drupal_load('module', 'field');
   content_notify('uninstall', 'ogdi_field');
 }
 
@@ -30,7 +30,7 @@ function ogdi_field_uninstall() {
  * Notify content module when this module is enabled.
  */
 function ogdi_field_enable() {
-  drupal_load('module', 'content');
+  drupal_load('module', 'field');
   content_notify('enable', 'ogdi_field');
 }
 
@@ -40,6 +40,6 @@ function ogdi_field_enable() {
  * Notify content module when this module is disabled.
  */
 function ogdi_field_disable() {
-  drupal_load('module', 'content');
+  drupal_load('module', 'field');
   content_notify('disable', 'ogdi_field');
 }
