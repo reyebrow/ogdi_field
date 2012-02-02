@@ -11,11 +11,14 @@
         // BUILDING THE MAP
         //==========================================//
         var url = $('#bing-map').text();
-        //var title = Drupal.settings.ogdi_field.title;
-        //var description = Drupal.settings.ogdi_field.description;
+        var fields = Drupal.settings.ogdi_field.description.split(',');
         $('#bing-map').gmap({'credentials': 'AoMbZ1CHE4fV_eihmcvW8m19IT4Gbn2oago4voVygVsAWwM8nN0aEmOen1Tc68xa', 'enableSearchLogo': false}).bind('init', function() {
         	$.getJSON(url, function(response) {
         		$.each(response.d, function(i, obj) {
+              var description = '';  
+              for(field in fields) {
+                description = description + obj[fields[field]] + '<br />';
+              }        
         			// Get our location from the fields we defined as lat long in the module
               var location = new Microsoft.Maps.Location(obj[Drupal.settings.ogdi_field.latitude], obj[Drupal.settings.ogdi_field.longitude]);
               // Add markers at our location
@@ -24,7 +27,7 @@
                 // Set up the marker/pin information...
         				$('#ogdi-map #bing-map').gmap('openInfoWindow', { 
         					'title': obj[Drupal.settings.ogdi_field.title],
-                  'description': obj[Drupal.settings.ogdi_field.description]
+                  'description': description //obj[Drupal.settings.ogdi_field.description]
         				}, this);
         			});
         		});

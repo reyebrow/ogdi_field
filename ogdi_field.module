@@ -216,14 +216,14 @@ function ogdi_field_field_widget_form(&$form, &$form_state, $field, $instance, $
 
   $options = array();
 
-  if(isset($item['url'])) {
+  /*if(isset($item['url'])) {
     $datainfo = ogdi_field_get_data_info($item['url']);
     $ogdi = ogdi_field_ogdi($datainfo['datasource'], $datainfo['dataset']);
     $metadata = ogdi_field_get_metadata($ogdi);
     foreach($metadata->d[0] as $meta => $value) {
       $options[$meta] = $meta;
     }
-  }
+  }*/
 
   // $element is already populated with #title, #description, #delta,
   // #required, #field_name, etc.
@@ -246,36 +246,40 @@ function ogdi_field_field_widget_form(&$form, &$form_state, $field, $instance, $
     '#default_value' => isset($item['url']) ? $item['url'] : '',
   );
 
-  $element['submit'] = array(
+  /*$element['submit'] = array(
     '#value' => t('Get Marker Metadata'),
     '#type' => 'button',
-    // use #default_value to prepopulate the element
-    // with the current saved value
     '#ajax' => array (
       'callback' => 'ogdi_field_get_metadata_callback',
-      'wrapper' => 'marker-info',
+      'wrapper' => 'marker-info-'. $delta,
     ),
     '#name' => 'button-' . $delta,
-    '#limit_validation_errors' => TRUE,
-  );
+    '#limit_validation_errors' => array(),
+  );*/
 
   // Have a separate fieldset for non-meat toppings
   $element['markers'] = array(
     '#title' => t('Marker Information'),
     '#type' => 'fieldset',
-    '#prefix' => '<div id="marker-info">',
+    '#prefix' => '<div id="marker-info-'. $delta .'">',
     '#suffix' => '</div>',
+    '#description' => t('Please choose which columns/fields from the dataset that will be used to create the map markers in the display. You can determine which ones to choose by looking at the dataset table column headers in the display on in the OGDI Data View'),
   );
 
   // Create a checkbox item for each topping on the menu
   foreach (ogdi_field_markers() as $marker=>$name) {
     $element['markers'][$marker] = array(
       '#title' => t($name),
-      '#type' => 'select',
+      //'#type' => 'select',
+      '#type' => 'textfield',
+      '#size' => 255,
       '#default_value' => isset($item['markers'][$marker]) ? $item['markers'][$marker] : '',
-      '#options' => $options,
+      '#description' => t('Please enter the name of a columns/header from the data table.'),
+      //'#options' => $options,
     );
   }
+
+  $element['markers']['description']['#description'] = t('Please enter the name of a columns/header from the data table. You can also enter multiple values separated by a comma with no spaces, eg. city,address,postal_code');
 
   return $element;
 }
@@ -477,26 +481,24 @@ function ogdi_field_get_metadata($ogdi) {
 function ogdi_field_get_metadata_callback($form, $form_state) {
   //watchdog('ogdi', '<pre> Form:' . print_r($form['field_colin_ogdi']['und'][0], TRUE) . '</pre>');
   $field_name = $form_state['triggering_element']['#array_parents'][0];
-  $markers = $form[$field_name][$form['#node']->language];
-
-  $element = $form['markers'];
-  if(isset($form['url'])) {
-    $datainfo = ogdi_field_get_data_info($form['url']);
-    $ogdi = ogdi_field_ogdi($datainfo['datasource'], $datainfo['dataset']);
-    $metadata = ogdi_field_get_metadata($ogdi);
-    foreach($metadata->d[0] as $meta => $value) {
-      $options[$meta] = $meta;
-    }
-  }
-  foreach($element as $marker => $value) {
-    $element[$marker]['#options'] = $options;
+  $delta = trim($form_state['clicked_button']['#name'] , 'button-');
+  $items = $form[$field_name][$form['#node']->language][$delta];
+  
+  $datainfo = ogdi_field_get_data_info($items['url']['#value']);
+  $ogdi = ogdi_field_ogdi($datainfo['datasource'], $datainfo['dataset']);
+  $metadata = ogdi_field_get_metadata($ogdi);
+  foreach($metadata->d[0] as $meta => $value) {
+    $options[$meta] = $meta;
   }
 
+  $form[$field_name][$form['#node']->language][$delta]['markers']['title']['#options'] = $options;
+  $form[$field_name][$form['#node']->language][$delta]['markers']['description']['#options'] = $options;
+  $form[$field_name][$form['#node']->language][$delta]['markers']['latitude']['#options'] = $options;
+  $form[$field_name][$form['#node']->language][$delta]['markers']['longitude']['#options'] = $options;
 
-  //return $element;
-  return '<pre>' . print_r($form_state['triggering_element'], TRUE) . '</pre>';
+  return drupal_render($form[$field_name][$form['#node']->language][$delta]['markers']);
+//  return '<pre>' . kpr($delta, TRUE) . '</pre>';
 }
-
 
 /**
  * Function to retrieve the full data of a certain dataset from OGDI.
