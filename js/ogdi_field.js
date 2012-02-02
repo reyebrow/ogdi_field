@@ -6,16 +6,31 @@
   Drupal.behaviors.buildTabs = {
     attach: function (context, settings) {
       if($('#ogdi-wrapper').length > 0) {
-        // Build the Map - this stuff must come first..
-        var container = $('#ogdi-map #bing-map'); // Get the map container...
-        var url = container.text(); // Get the URL of the kml document...
-        var map;  // Set a map variable...
-        map = new VEMap('bing-map');  // Create a new map in the container <div id="bing-map">
-        map.LoadMap();  // Load the map...
-        var shapeLayer = new VEShapeLayer();  // Create a shape layer to import the KML data into...
-        var shapeSpec = new VEShapeSourceSpecification(VEDataType.ImportXML, url, shapeLayer);
-        map.ImportShapeLayerData(shapeSpec);
-      
+        
+        //==========================================//
+        // BUILDING THE MAP
+        //==========================================//
+        var url = $('#bing-map').text();
+        //var title = Drupal.settings.ogdi_field.title;
+        //var description = Drupal.settings.ogdi_field.description;
+        $('#bing-map').gmap({'credentials': 'AoMbZ1CHE4fV_eihmcvW8m19IT4Gbn2oago4voVygVsAWwM8nN0aEmOen1Tc68xa', 'enableSearchLogo': false}).bind('init', function() {
+        	$.getJSON(url, function(response) {
+        		$.each(response.d, function(i, obj) {
+        			// Get our location from the fields we defined as lat long in the module
+              var location = new Microsoft.Maps.Location(obj[Drupal.settings.ogdi_field.latitude], obj[Drupal.settings.ogdi_field.longitude]);
+              // Add markers at our location
+        			$('#bing-map').gmap('addMarker', { 'location': location, 'bounds': true } )
+        			.click(function() {
+                // Set up the marker/pin information...
+        				$('#ogdi-map #bing-map').gmap('openInfoWindow', { 
+        					'title': obj[Drupal.settings.ogdi_field.title],
+                  'description': obj[Drupal.settings.ogdi_field.description]
+        				}, this);
+        			});
+        		});
+        	});
+        });
+
         // Create the tabs...   
         $("#ogdi-tabs").tabs();
         
@@ -25,8 +40,10 @@
           "bAutoWidth": true, // Allow it's width to be automatic...
           "sPaginationType": "full_numbers",  // Use full numbers for pagination...
           "sScrollX": "100%", // Provide a horizontal scrollbar...
-          "bScrollCollapse": true
+          "bScrollCollapse": true,
+          "bRetrieve" : true
         });
+
       }
     }
   }

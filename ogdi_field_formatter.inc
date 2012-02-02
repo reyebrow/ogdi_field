@@ -32,48 +32,49 @@ function theme_ogdi_field_formatter_default($variables) {
     drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table_jui.css', array('type' => 'file', 'media' => 'all', 'group' => JS_LIBRARY));
   
     /* Add bing maps stuff */
-    drupal_add_js('http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.3', array('type' => 'external', 'group' => JS_LIBRARY));
+    drupal_add_js('http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header'));
+    drupal_add_js('http://jquery-bing-maps.googlecode.com/svn/trunk/js/min/jquery.ui.bmap.min.js', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header'));
     
     /* OGDI Stuff */
-    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/js/ogdi_field.js', array('type' => 'file'));
+    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/js/ogdi_field.js', array('type' => 'file', 'scope' => 'footer'));
     drupal_add_css(drupal_get_path('module', 'ogdi_field') ."/css/ogdi_field.css", array('type' => 'file', 'media' => 'all'));
+    // Set the field markers as setting variables so that we can retrieve what fields we want to add to the markers...
+    drupal_add_js(array(
+      'ogdi_field' => array(
+        'title' => $variables['markers']['title'],
+        'description' => $variables['markers']['description'],
+        'latitude' => $variables['markers']['latitude'],
+        'longitude' => $variables['markers']['longitude']
+        )
+      ), 'setting'
+    );
   
     /* Reset the sticky table headers - see theme_ogdi_field_container() */
     //drupal_add_js('$("table.no-sticky thead").addClass("tableHeader-processed");', array('type' => 'inline', 'scope' => 'header'));
 
-    // Filter out any harmful stuff
-    $field_url = filter_xss($variables['display_url']);
+    // Get information about the dataset...
+    $datainfo = ogdi_field_get_data_info($variables['display_url']);
     
-    // Get the ID of the actual Dataset, should be the last element in the array
-    $url = parse_url($field_url);
-    $dataset_path = explode('/', $url['path']); // explode('/', substr($field_url, 7));
-    $dataset_id = $dataset_path[count($dataset_path) - 1]; 
-    
-    // Get the path to the actual Datasource instance
-    $datasource = $url['scheme'] . '://' . $url['host'] . '/' . implode('/', array_slice($dataset_path, 1, -1));
-    
-    // Create a new instance of OGDI object
-    $ogdi = ogdi_field_ogdi($datasource, $dataset_id);
+    // Create a new instance of OGDI object...
+    $ogdi = ogdi_field_ogdi($datainfo['datasource'], $datainfo['dataset']);
 
-    // Get the schema (column names) of the dataset
+    // Get the schema (column names) of the dataset...
     $schema = ogdi_field_get_metadata($ogdi);
     
-    // Build the table headers from that
+    // Build the table headers from that...
     $headers = ogdi_field_build_table_headers($schema->d[0]);
     
-    // Get the data
+    // Get the data...
     $parameters = array('format' => 'json');
     $data = ogdi_field_get_data($ogdi, $parameters);
     
-    // Build the table rows from that data
+    // Build the table rows from that data...
     $rows = ogdi_field_build_table($data->d, $headers);
         
-    // Build the filter form
-    //$filter_form = drupal_get_form('ogdi_field_filter_form', $ogdi, $element);
-    //$output .= $filter_form;
-    
-    // Theme the container
-    $output .= theme('ogdi_field_container', array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters));
+    // Build the OGDI data form...
+    $form_variables = array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters);
+    $form = drupal_get_form('ogdi_field_data_form', $form_variables);
+    $output .= drupal_render($form);
   } 
   return $output;
 }
@@ -82,15 +83,15 @@ function theme_ogdi_field_formatter_default($variables) {
 /**
  * Theme function for 'plain' ogdi_field field formatter.
  */
-function theme_ogdi_field_formatter_plain($element) {
-  return strip_tags($element['#item']['safe']);
+function theme_ogdi_field_formatter_plain($variables) {
+  return strip_tags($variables['display_url']);
 }
 
 /**
  * Theme function for 'link' ogdi_field field formatter.
  */
-function theme_ogdi_field_formatter_link($element) {
-  return l(strip_tags($element['#item']['safe']), strip_tags($element['#item']['safe']));
+function theme_ogdi_field_formatter_link($variables) {
+  return l(strip_tags($variables['display_url']), strip_tags($variables['display_url']));
 }
 
 
@@ -161,17 +162,19 @@ function theme_ogdi_field_datatable($variables) {
  * Theme function for the OGDI Map
  */
 function theme_ogdi_field_map($variables) {
-  $variables['parameters']['format'] = 'kml';
+  $variables['parameters']['format'] = 'json';
   foreach ($variables['parameters'] as $key => $value) {
       $string[] = $key .'='. urlencode($value);
     }
   $querystring = implode('&', $string);
   
   // Output the Path to the ATOM Feed API
-  //$output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
-  
+  // $output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
+  watchdog('ogdi', 'MAP URL <pre>Form: '. print_r($variables['datasource'] . '/' . $variables['dataset_id'] .'?'. $querystring, TRUE) . '</pre>');
+
   $output .= '<div id="bing-map">';
-  $output .= $variables['datasource'] . '/' . $variables['dataset_id'] .'?'. $querystring .'</div>';
+  $output .= $variables['datasource'] . '/' . $variables['dataset_id'] .'?'. $querystring .'&callback=?';
+  $output .= '</div>';
   return $output;
 }
 
@@ -182,14 +185,12 @@ function theme_ogdi_field_map($variables) {
 function theme_ogdi_field_helptext($field) {
   $output = '';
   // If there is a value in the field, we want to ouput it..
-  if (!empty($field)) {
-    if (module_exists('jquery_ui')) {  // If jquery_ui is installed(which it should be)...
-      jquery_ui_add('ui.dialog'); // Load the dialog widget...
-      $current_page = drupal_get_path_alias($_GET['q']);
-      $output .= l('Help on how to write expressions', $current_page, $options = array('attributes' => array('class' => 'ogdi-helptip'), 'html' => TRUE));  // Output the help icon...
-    }
-    $output .= '<div class="ogdi-helptext" title="' . t('Expression filter hints') . '"' . chr(10);
-    $output .= $field['#value'] . chr(10);
+  if (!empty($field['']['#value'])) {
+    //drupal_add_library('system', 'ui.dialog'); // Load the dialog widget...
+    $current_page = drupal_get_path_alias($_GET['q']);
+    $output .= l('Help on how to write expressions', $current_page, $options = array('attributes' => array('class' => array('ogdi-helptip')), 'html' => TRUE));  // Output the help icon...
+    $output .= '<div class="ogdi-helptext" title="' . t('Expression filter hints') . '">' . chr(10);
+    $output .= $field['']['#value'] . chr(10);
     $output .= '</div>' . chr(10) ;
   }
   return $output;
@@ -234,10 +235,9 @@ function theme_ogdi_field_download_link($datasource, $dataset_id, $querystring) 
 /**
  * Function to build the OGDI filter form that will run queries on the page
  */
-function ogdi_field_filter_form(&$form_state, $ogdi, $element) {
+function ogdi_field_filter_form($form, &$form_state, $ogdi, $element) {
   // Get the current field so that we can set the titles and descriptions on form elements...
-  $field = content_fields($element['#field_name']);
-
+  //$field = content_fields($element['#field_name']);
   $form['query'] = array(
     '#title' => t('Filter the dataset'),
     '#type' => 'fieldset',
@@ -247,13 +247,13 @@ function ogdi_field_filter_form(&$form_state, $ogdi, $element) {
   
   $form['query']['filter'] = array(
     '#type'         =>  'textarea',
-    '#title'        =>  $field['filter_label'],
-    '#description'  =>  $field['filter_description'],
-    '#element_validate' =>  array('ogdi_field_filter_validate')
+    '#title'        =>  'Filter',//$field['filter_label'],
+    '#description'  =>  'Description',//$field['filter_description'],
+    //'#element_validate' =>  array('ogdi_field_filter_validate')
   );
   
   $form['query']['helptext'] = array(
-    '#value'        =>  $field['filter_helptext'],
+    '#value'        =>  'Helptext',//$field['filter_helptext'],
     '#theme'        =>  'ogdi_field_helptext'
   );
     
@@ -271,14 +271,13 @@ function ogdi_field_filter_form(&$form_state, $ogdi, $element) {
   $form['query']['submit'] = array(
     '#type'   =>  'submit',
     '#value'  =>  t('Run'),
-    '#ahah' => array(
-      'path' => 'ogdi_field_filter',  // See hook_menu for this...
+    '#ajax' => array(
+      'callback' => 'ogdi_field_filter_callback',  // See hook_menu for this...
       'wrapper' => 'ogdi-wrapper',
       'progress' => array('type' => 'throbber', 'message' => t('Please wait...')),
       'method' =>  'replace',
       'effect' =>  'fade'
-     ),
+     ), 
   );
-  
   return $form;
 }

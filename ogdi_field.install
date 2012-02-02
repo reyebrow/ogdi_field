@@ -1,45 +1,46 @@
 <?php
-// $Id$
-
 /**
  * @file
+ * Install, update, and uninstall functions for the field_example module.
  */
 
-// Notify CCK when this module is enabled, disabled, installed,
-// and uninstalled so CCK can do any necessary preparation or cleanup.
-
 /**
- * Implementation of hook_install().
- */
-function ogdi_field_install() {
-  drupal_load('module', 'field');
-  content_notify('install', 'ogdi_field');
-}
-
-/**
- * Implementation of hook_uninstall().
- */
-function ogdi_field_uninstall() {
-  drupal_load('module', 'field');
-  content_notify('uninstall', 'ogdi_field');
-}
-
-/**
- * Implementation of hook_enable().
+ * Implements hook_field_schema().
  *
- * Notify content module when this module is enabled.
- */
-function ogdi_field_enable() {
-  drupal_load('module', 'field');
-  content_notify('enable', 'ogdi_field');
-}
-
-/**
- * Implementation of hook_disable().
+ * Defines the database schema of the field, using the format used by the
+ * Schema API.
  *
- * Notify content module when this module is disabled.
+ * The data we will store here is just one 255-character elemen
+ *
+ * @see http://drupal.org/node/146939
+ * @see schemaapi
+ * @see hook_field_schema()
+ * @ingroup field_example
  */
-function ogdi_field_disable() {
-  drupal_load('module', 'field');
-  content_notify('disable', 'ogdi_field');
+function ogdi_field_field_schema($field) {
+  module_load_include('inc', 'ogdi_field', 'ogdi_field.markers');
+  $columns = array(
+    'url' => array(
+      'type' => 'varchar',
+      'length' => 2047,
+      'not null' => TRUE
+    ),
+  );
+
+  foreach (ogdi_field_markers() as $marker=>$field) {
+    $columns[$marker] = array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+    );
+  }
+  
+  $indexes = array(
+    'url' => array('url'),
+  );
+
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+  );
 }

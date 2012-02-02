@@ -5,8 +5,13 @@
 
 /* Need to stop maps from being positioned all over the page */
 #ogdi-map, 
-#ogdi-map #bing-map {
+#bing-map {
+  height:400px;
   position: relative;
+}
+
+#bing-map {
+  width:100%;
 }
 
 /* Override the default Bing Map width */
