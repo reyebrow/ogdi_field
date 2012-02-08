@@ -22,7 +22,7 @@ function ogdi_field_theme() {
   return array(
     // Themes for the formatters.
     'ogdi_field_formatter_default' => array(
-      'variables' => array('display_url' => NULL, 'markers' => NULL),
+      'variables' => array('display_url' => NULL, 'delta' => NULL, 'markers' => NULL),
       'file' => 'ogdi_field_formatter.inc',
     ),
     'ogdi_field_formatter_plain' => array(
@@ -38,7 +38,7 @@ function ogdi_field_theme() {
       'file' => 'ogdi_field_formatter.inc',
     ),
     'ogdi_field_container' => array(
-      'variables' => array('ogdi' => NULL, 'headers' => NULL, 'rows' => NULL, 'parameters' => NULL),
+      'variables' => array('ogdi' => NULL, 'headers' => NULL, 'rows' => NULL, 'parameters' => NULL, 'delta' => NULL),
       'file' => 'ogdi_field_formatter.inc',
     ),
     'ogdi_field_datatable' => array(
@@ -46,7 +46,7 @@ function ogdi_field_theme() {
       'file' => 'ogdi_field_formatter.inc',
     ),
     'ogdi_field_map' => array(
-      'variables' => array('datasource' => NULL, 'dataset_id' => NULL, 'parameters' => NULL),
+      'variables' => array('datasource' => NULL, 'dataset_id' => NULL, 'parameters' => NULL, 'delta' => NULL),
       'file' => 'ogdi_field_formatter.inc',
     ),
     'ogdi_field_helptext' => array(
@@ -398,6 +398,7 @@ function ogdi_field_field_formatter_view($entity_type, $entity, $field, $instanc
           // Pass the a display_url variable to the theme function. 
           // @see $variables in theme_ogdi_field_formatter_default
           '#display_url' => $item['url'],
+          '#delta'  => $delta,
           '#markers' => $item['markers'],
           '#theme' => 'ogdi_field_formatter_default',
         );
@@ -423,7 +424,7 @@ function ogdi_field_field_formatter_view($entity_type, $entity, $field, $instanc
         );
       }
       break;
-  }
+  } 
   return $element;
 }
 
@@ -447,7 +448,7 @@ function ogdi_field_field_formatter_view($entity_type, $entity, $field, $instanc
  *   A full OGDI object.
  */
 function ogdi_field_ogdi($datasource = NULL, $dataset_id = NULL) {
-  static $ogdi = NULL;
+  //static $ogdi = NULL;
   if (!$ogdi) {
     require_once(dirname(__FILE__) . '/ogdi-api.php');
     $ogdi = new Ogdi($datasource, $dataset_id);
@@ -611,8 +612,8 @@ function ogdi_field_build_table($data, $headers) {
  * Implements hook_form().
  */
 function ogdi_field_data_form($form, $form_state, $variables) {
-
   $form = array();
+  $delta = $variables['delta'];
   
   $form['query'] = array(
     '#title' => t('Filter the dataset'),
@@ -632,15 +633,20 @@ function ogdi_field_data_form($form, $form_state, $variables) {
     '#value'        =>  'Helptext',//$field['filter_helptext'],
     '#theme'        =>  'ogdi_field_helptext'
   );
+
+  $form['query']['delta'] = array(
+    '#type'   => 'hidden',
+    '#value'  => $variables['delta'],
+  );
     
   $form['query']['datasource'] = array(
     '#type'   => 'hidden',
-    '#value'  => $variables['ogdi']->datasource
+    '#value'  => $variables['ogdi']->datasource,
   );
   
   $form['query']['dataset_id'] = array(
     '#type'   => 'hidden',
-    '#value'  => $variables['ogdi']->dataset_id
+    '#value'  => $variables['ogdi']->dataset_id,
   );
   
   // On submit we want to run an ajax callback...
@@ -649,7 +655,7 @@ function ogdi_field_data_form($form, $form_state, $variables) {
     '#value'  =>  t('Run'),
     '#ajax' => array(
       'callback' => 'ogdi_field_filter_callback',  // See hook_menu for this...
-      'wrapper' => 'table_map',
+      'wrapper' => 'table_' . $delta,
       'name' => 'submit',
       'progress' => array('type' => 'throbber', 'message' => t('Please wait...')),
       'method' =>  'replace',
@@ -657,11 +663,11 @@ function ogdi_field_data_form($form, $form_state, $variables) {
      ), 
   );
   
-  $table = theme('ogdi_field_container', array('ogdi' => $variables['ogdi'], 'headers' => $variables['headers'], 'rows' => $variables['rows'], 'parameters' => $variables['parameters']));
+  $table = theme('ogdi_field_container', array('ogdi' => $variables['ogdi'], 'headers' => $variables['headers'], 'rows' => $variables['rows'], 'parameters' => $variables['parameters'], 'delta' => $delta));
   
-  $form['table_map'] = array(
+  $form['table_map_'. $delta] = array(
     '#type' => 'markup',
-    '#prefix' => '<div id="table_map">',
+    '#prefix' => '<div id="table_'. $delta . '">',
     '#suffix' => '</div>',
     '#markup' => $table,
   );
@@ -676,7 +682,7 @@ function ogdi_field_data_form($form, $form_state, $variables) {
  * @see ogdi_field_filter_form().
  */
 function ogdi_field_filter_callback($form, $form_state) {
-
+  $delta = filter_xss($form['query']['delta']['#value']);
   $datasource = filter_xss($form['query']['datasource']['#value']);
   $dataset_id = filter_xss($form['query']['dataset_id']['#value']);
 
@@ -686,7 +692,7 @@ function ogdi_field_filter_callback($form, $form_state) {
   
   // Create a new instance of OGDI object
   $ogdi = ogdi_field_ogdi($datasource, $dataset_id);
-  watchdog('ogdi', 'In here <pre>Form: '. print_r($filter, TRUE) . '</pre>');
+
   // Get the schema (column names) of the dataset
   $schema = ogdi_field_get_metadata($ogdi);
   
@@ -699,9 +705,9 @@ function ogdi_field_filter_callback($form, $form_state) {
   // Build the table rows from that data
   $rows = ogdi_field_build_table($data->d, $headers);
   
-  $output = theme('ogdi_field_container', array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters, 'datasource' => $datasource, 'dataset_id' => $dataset_id));
-
-  $element = $form['table_map'];
+  $output = theme('ogdi_field_container', array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters, 'datasource' => $datasource, 'dataset_id' => $dataset_id, 'delta' => $delta));
+  
+  $element = $form['table_map_' . $delta];
   $element['#markup'] = $output;
   return $element;
 }

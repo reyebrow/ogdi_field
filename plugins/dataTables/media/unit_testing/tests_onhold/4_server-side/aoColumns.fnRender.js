@@ -6,7 +6,7 @@ $(document).ready( function () {
 	var mTmp = 0;
 	var oTable = $('#example').dataTable( {
 		"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
+		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
 		"aoColumns": [
 			null,
 			{ "fnRender": function (a) {
@@ -27,49 +27,22 @@ $(document).ready( function () {
 	);
 	
 	oTest.fnWaitTest( 
-		"Confirm that fnRender passes one argument (an object) with three parameters",
+		"Confirm that fnRender passes two arguments with four parameters",
 		function () {
 			mTmp = true;
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
 				"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
+		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
-						if ( arguments.length != 1 || typeof a.iDataRow=='undefined' ||
-						 	typeof a.iDataColumn=='undefined' || typeof a.aData=='undefined' )
+						if ( arguments.length != 2 || typeof a.iDataRow=='undefined' ||
+						 	typeof a.iDataColumn=='undefined' || typeof a.aData=='undefined' ||
+						 	typeof a.mDataProp=='undefined' )
 						{
 							mTmp = false;
 						}
-						return a.aData[a.iDataColumn];
-					} },
-					null,
-					null,
-					null
-				]
-			} );
-		},
-		function () { return mTmp; }
-	);
-	
-	oTest.fnWaitTest( 
-		"fnRender iDataColumn is row number",
-		function () {
-			var iCount = 0;
-			mTmp = true;
-			oSession.fnRestore();
-			oTable = $('#example').dataTable( {
-				"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
-				"aoColumns": [
-					null,
-					{ "fnRender": function (a) {
-						if ( iCount != a.iDataRow )
-						{
-							mTmp = false;
-						}
-						iCount++;
 						return a.aData[a.iDataColumn];
 					} },
 					null,
@@ -88,7 +61,7 @@ $(document).ready( function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
 				"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
+		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
@@ -114,7 +87,7 @@ $(document).ready( function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
 				"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
+		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
@@ -139,7 +112,7 @@ $(document).ready( function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
 				"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
+		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
@@ -160,7 +133,7 @@ $(document).ready( function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
 				"bServerSide": true,
-		"sAjaxSource": "../../../examples/examples_support/server_processing.php",
+		"sAjaxSource": "../../../examples/server_side/scripts/server_processing.php",
 				"aoColumns": [
 					null,
 					null,

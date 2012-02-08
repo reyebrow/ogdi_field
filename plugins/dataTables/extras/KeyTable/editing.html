@@ -27,6 +27,7 @@
 					$(nCell).editable( function (sVal) {
 						/* Submit function (local only) - unblock KeyTable */
 						keys.block = false;
+						$(nCell).editable('destroy');
 						return sVal;
 					}, { 
 						"onblur": 'submit', 
@@ -34,6 +35,7 @@
 							/* Unblock KeyTable, but only after this 'esc' key event has finished. Otherwise
 							 * it will 'esc' KeyTable as well
 							 */
+							$(nCell).editable('destroy');
 							setTimeout( function () {keys.block = false;}, 0); 
 						}
 					} );
@@ -519,6 +521,7 @@
 				<li><a href="editing.html">Editing a table</a></li>
 				<li><a href="form.html">Integration with an HTML form</a></li>
 				<li><a href="datatable.html">Integration with DataTables</a></li>
+				<li><a href="datatable_scrolling.html">Using KeyTable with scrolling in DataTables</a></li>
 			</ul>
 			
 			

@@ -1,21 +1,21 @@
 /* Add some margins to the wrapper */
-#ogdi-wrapper {
+.ogdi-wrapper {
   margin:10px 0;
 }
 
 /* Need to stop maps from being positioned all over the page */
-#ogdi-map, 
-#bing-map {
+.ogdi-map, 
+.bing-map {
   height:400px;
   position: relative;
 }
 
-#bing-map {
+.bing-map {
   width:100%;
 }
 
 /* Override the default Bing Map width */
-#ogdi-map #bing-map {
+.ogdi-map .bing-map {
   width:100% !important;
 }
 

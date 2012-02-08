@@ -4,7 +4,7 @@ oTest.fnStart( "oLanguage.sLengthMenu" );
 $(document).ready( function () {
 	/* Check the default */
 	var oTable = $('#example').dataTable( {
-		"sAjaxSource": "../../../examples/examples_support/json_source.txt"
+		"sAjaxSource": "../../../examples/ajax/sources/arrays.txt"
 	} );
 	var oSettings = oTable.fnSettings();
 	
@@ -21,10 +21,16 @@ $(document).ready( function () {
 	);
 	
 	oTest.fnTest(
+		"A label input is used",
+		null,
+		function () { return $('label', oSettings.aanFeatures.l[0]).length == 1 }
+	);
+	
+	oTest.fnTest(
 		"Default is put into DOM",
 		null,
 		function () {
-			var anChildren = oSettings.aanFeatures.l[0].childNodes;
+			var anChildren = $('label',oSettings.aanFeatures.l[0])[0].childNodes;
 			var bReturn =
 				anChildren[0].nodeValue == "Show " &&
 				anChildren[2].nodeValue == " entries";
@@ -38,7 +44,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"oLanguage": {
 					"sLengthMenu": "unit test"
 				}
@@ -52,8 +58,7 @@ $(document).ready( function () {
 		"Menu length language definition is in the DOM",
 		null,
 		function () {
-			var anChildren = oSettings.aanFeatures.l[0].childNodes;
-			return anChildren[0].nodeValue == "unit test";
+			return $('label', oSettings.aanFeatures.l[0]).text() == "unit test";
 		}
 	);
 	
@@ -63,7 +68,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"oLanguage": {
 					"sLengthMenu": "unit _MENU_ test"
 				}
@@ -71,7 +76,7 @@ $(document).ready( function () {
 			oSettings = oTable.fnSettings();
 		},
 		function () {
-			var anChildren = oSettings.aanFeatures.l[0].childNodes;
+			var anChildren = $('label',oSettings.aanFeatures.l[0])[0].childNodes;
 			var bReturn =
 				anChildren[0].nodeValue == "unit " &&
 				anChildren[2].nodeValue == " test";
@@ -85,7 +90,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"oLanguage": {
 					"sLengthMenu": "_MENU_"
 				}

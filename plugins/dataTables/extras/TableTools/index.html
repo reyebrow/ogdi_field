@@ -12,13 +12,10 @@
 		</style>
 		<script type="text/javascript" charset="utf-8" src="../../media/js/jquery.js"></script>
 		<script type="text/javascript" charset="utf-8" src="../../media/js/jquery.dataTables.js"></script>
-		<script type="text/javascript" charset="utf-8" src="media/ZeroClipboard/ZeroClipboard.js"></script>
+		<script type="text/javascript" charset="utf-8" src="media/js/ZeroClipboard.js"></script>
 		<script type="text/javascript" charset="utf-8" src="media/js/TableTools.js"></script>
 		<script type="text/javascript" charset="utf-8">
 			$(document).ready( function () {
-				/* You might need to set the sSwfPath! Something like:
-				 *   TableToolsInit.sSwfPath = "/media/swf/ZeroClipboard.swf";
-				 */
 				$('#example').dataTable( {
 					"sDom": 'T<"clear">lfrtip'
 				} );
@@ -32,16 +29,8 @@
 			</div>
 			
 			<h1>Preamble</h1>
-			<p>TableTools in a features plug-in for DataTables which presents a tool bar for a table providing the end user with options for saving files Comma Separated Values (CSV) or Excel (XLS), copying data to system Clipboard, or printing the table.</p>
-			<p>Points to note</p>
-			<ul>
-				<li>Please note that DataTables 1.5.x or greater is required for TableTools</li>
-				<li>Flash 10 is used for the file save / clipboard operations so the user will required that installed for their browser</li>
-				<li>Features and customisation options for TableTools is done through the <i>TableToolsInit</i> variable</li>
-				<li>You might need to set the sSwfPath variable for TableTools to find the required Flash file (TableToolsInit.sSwfPath="...")</li>
-				<li>TableTools will not work using file:// protocol (i.e. from your desktop) unless you specifically allow it in your <a href="http://www.macromedia.com/support/documentation/en/flashplayer/help/settings_manager04a.html">Flash Player settings</a></li>
-			</ul>
-			
+			<p>This example shows the basic initialisation of TableTools by simply including the 'T' marker in DataTables' sDom parameter. This tell DataTables to insert the TableTools toolbar in that location. Remember to include the Javascript and CSS source files as well!</p>
+			<p>It is worth noting that you might need to <a href="swf_path.html">set the <i>sSwfPath</i> parameter</a> to tell TableTools where to find the SWF file for copy and file save.</p>
 			
 			<h1>Live example</h1>
 			<div id="demo">
@@ -55,6 +44,15 @@
 			<th>CSS grade</th>
 		</tr>
 	</thead>
+	<tfoot>
+		<tr>
+			<th>Rendering engine</th>
+			<th>Browser</th>
+			<th>Platform(s)</th>
+			<th>Engine version</th>
+			<th>CSS grade</th>
+		</tr>
+	</tfoot>
 	<tbody>
 		<tr class="odd_gradeX">
 			<td>Trident</td>
@@ -99,7 +97,7 @@
 			<td class="center">A</td>
 		</tr>
 		<tr class="odd_gradeA">
-			<td>Gecko (UTF-8: $¢€)</td>
+			<td>Gecko (UTF-8: $¢€ היצוא)</td>
 			<td>Firefox 1.0</td>
 			<td>Win 98+ / OSX.2+</td>
 			<td class="center">1.7</td>
@@ -463,17 +461,34 @@
 			
 			<h1>Initialisation code</h1>
 			<pre>$(document).ready( function () {
-	/* You might need to set the sSwfPath! Something like:
-	 *   TableToolsInit.sSwfPath = "/media/swf/ZeroClipboard.swf";
-	 */
 	$('#example').dataTable( {
 		"sDom": 'T&lt;"clear"&gt;lfrtip'
 	} );
 } );</pre>
+
+
+			<h1>Other examples</h1>
+			<ul>
+				<li><a href="index.html">Basic initialisation</a></li>
+				<li><a href="swf_path.html">Setting the SWF path</a></li>
+				<li><a href="alter_buttons.html">Custom button arrangement</a></li>
+				<li><a href="button_text.html">Button text alteration</a></li>
+				<li><a href="collection.html">Using button collections</a></li>
+				<li><a href="theme.html">Using jQuery UI themes</a></li>
+				<li><a href="multi_instance.html">Multiple TableTools toolbars for a single table</a></li>
+				<li><a href="multiple_tables.html">Multiple DataTables with a single initialisation</a></li>
+				<li><a href="select_multi.html">User selectable rows (multiple rows)</a></li>
+				<li><a href="select_single.html">User selectable rows (single row)</a></li>
+				<li><a href="alt_init.html">Alternative initialisation using 'new TableTools()'</a></li>
+				<li><a href="defaults.html">Altering the TableTools defaults</a></li>
+				<li><a href="plug-in.html">TableTools plug-in buttons</a></li>
+				<li><a href="pdf_message.html">Customising the PDF output (adding text and orientation)</a></li>
+			</ul>
+			
 			
 			<div id="footer" style="text-align:center;">
 				<span style="font-size:10px;">
-					TableTools and DataTables &copy; Allan Jardine 2009-2010.<br>
+					TableTools and DataTables &copy; Allan Jardine 2009-2011.<br>
 					Flash 10 save / copy operations are performed by a modified version of <a href="http://code.google.com/p/zeroclipboard/">Zero Clipboard</a>.<br>
 					The icons used in the toolbar are modified from <a href="http://www.addictedtocoffee.de/">Oliver Twardowski's</a> <a href="http://www.smashingmagazine.com/2009/05/20/flavour-extended-the-ultimate-icon-set-for-web-designers/">Flavours Icon set</a>.
 				</span>

@@ -4,7 +4,7 @@ oTest.fnStart( "oLanguage.sSearch" );
 $(document).ready( function () {
 	/* Check the default */
 	var oTable = $('#example').dataTable( {
-		"sAjaxSource": "../../../examples/examples_support/json_source.txt"
+		"sAjaxSource": "../../../examples/ajax/sources/arrays.txt"
 	} );
 	var oSettings = oTable.fnSettings();
 	
@@ -14,10 +14,16 @@ $(document).ready( function () {
 		function () { return oSettings.oLanguage.sSearch == "Search:"; }
 	);
 	
+	oTest.fnTest(
+		"A label input is used",
+		null,
+		function () { return $('label', oSettings.aanFeatures.f[0]).length == 1 }
+	);
+	
 	oTest.fnTest( 
 		"Search language default is in the DOM",
 		null,
-		function () { return document.getElementById('example_filter').childNodes[0].nodeValue
+		function () { return $('label', oSettings.aanFeatures.f[0]).text()
 		 	== "Search: "; }
 	);
 	
@@ -27,7 +33,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"oLanguage": {
 					"sSearch": "unit test"
 				}
@@ -40,8 +46,7 @@ $(document).ready( function () {
 	oTest.fnTest( 
 		"Info language definition is in the DOM",
 		null,
-		function () { return document.getElementById('example_filter').childNodes[0].nodeValue
-		 	== "unit test "; }
+		function () { return $('label', oSettings.aanFeatures.f[0]).text().indexOf('unit test') !== -1; }
 	);
 	
 	
@@ -50,7 +55,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"oLanguage": {
 					"sSearch": ""
 				}

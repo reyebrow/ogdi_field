@@ -5,7 +5,7 @@ $(document).ready( function () {
 	/* Check the default */
 	var mTmp = 0;
 	var oTable = $('#example').dataTable( {
-		"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+		"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 		"aoColumns": [
 			null,
 			{ "fnRender": function (a) {
@@ -20,53 +20,27 @@ $(document).ready( function () {
 	var oSettings = oTable.fnSettings();
 	
 	oTest.fnWaitTest( 
-		"Single column - fnRender is called once for each row",
+		"Single column - fnRender is called twice for each row",
 		null,
 		function () { return mTmp == 57; }
 	);
 	
 	oTest.fnWaitTest( 
-		"Confirm that fnRender passes one argument (an object) with three parameters",
+		"Confirm that fnRender passes two arguments with four parameters",
 		function () {
 			mTmp = true;
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
-						if ( arguments.length != 1 || typeof a.iDataRow=='undefined' ||
-						 	typeof a.iDataColumn=='undefined' || typeof a.aData=='undefined' )
+						if ( arguments.length != 2 || typeof a.iDataRow=='undefined' ||
+						 	typeof a.iDataColumn=='undefined' || typeof a.aData=='undefined' ||
+						 	typeof a.mDataProp=='undefined' )
 						{
 							mTmp = false;
 						}
-						return a.aData[a.iDataColumn];
-					} },
-					null,
-					null,
-					null
-				]
-			} );
-		},
-		function () { return mTmp; }
-	);
-	
-	oTest.fnWaitTest( 
-		"fnRender iDataColumn is row number",
-		function () {
-			var iCount = 0;
-			mTmp = true;
-			oSession.fnRestore();
-			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
-				"aoColumns": [
-					null,
-					{ "fnRender": function (a) {
-						if ( iCount != a.iDataRow )
-						{
-							mTmp = false;
-						}
-						iCount++;
 						return a.aData[a.iDataColumn];
 					} },
 					null,
@@ -84,7 +58,7 @@ $(document).ready( function () {
 			mTmp = true;
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
@@ -109,7 +83,7 @@ $(document).ready( function () {
 			mTmp = true;
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
@@ -133,7 +107,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"aoColumns": [
 					null,
 					{ "fnRender": function (a) {
@@ -153,7 +127,7 @@ $(document).ready( function () {
 		function () {
 			oSession.fnRestore();
 			oTable = $('#example').dataTable( {
-				"sAjaxSource": "../../../examples/examples_support/json_source.txt",
+				"sAjaxSource": "../../../examples/ajax/sources/arrays.txt",
 				"aoColumns": [
 					null,
 					null,

@@ -109,7 +109,7 @@ $(document).ready( function () {
 				}
 				
 				/* Only the two custom divs don't have class names */
-				if ( !jqNodes[i].getAttribute('class') )
+				if ( jqNodes[i].className == "" )
 				{
 					nCustomWrappers.push( jqNodes[i] );
 				}
@@ -246,6 +246,71 @@ $(document).ready( function () {
 				nNodes[4] == nInfo &&
 				null == nPaging;
 			return bReturn;
+		}
+	);
+	
+	oTest.fnTest( 
+		"Element with an id",
+		function () {
+			$('#example').dataTable( {
+				"bDestroy": true,
+				"sDom": '<"#test"lf>rti'
+			} );
+		},
+		function () {
+			return $('#test').length == 1;
+		}
+	);
+	
+	oTest.fnTest( 
+		"Element with an id and a class",
+		function () {
+			$('#example').dataTable( {
+				"bDestroy": true,
+				"sDom": '<"#test.classTest"lf>rti'
+			} );
+		},
+		function () {
+			return ($('#test').length == 1 && $('#test')[0].className == "classTest");
+		}
+	);
+	
+	oTest.fnTest( 
+		"Element with just a class",
+		function () {
+			$('#example').dataTable( {
+				"bDestroy": true,
+				"sDom": '<"classTest"lf>rti'
+			} );
+		},
+		function () {
+			return ($('div.classTest').length == 1 );
+		}
+	);
+	
+	oTest.fnTest( 
+		"Two elements with an id",
+		function () {
+			$('#example').dataTable( {
+				"bDestroy": true,
+				"sDom": '<"#test1"lf>rti<"#test2"lf>'
+			} );
+		},
+		function () {
+			return ($('#test1').length == 1 && $('#test2').length == 1);
+		}
+	);
+	
+	oTest.fnTest( 
+		"Two elements with an id and one with a class",
+		function () {
+			$('#example').dataTable( {
+				"bDestroy": true,
+				"sDom": '<"#test1"lf>rti<"#test2.classTest"lf>'
+			} );
+		},
+		function () {
+			return ($('#test1').length == 1 && $('#test2').length == 1 && $('div.classTest').length == 1);
 		}
 	);
 	

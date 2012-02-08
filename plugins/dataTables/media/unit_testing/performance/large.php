@@ -23,18 +23,28 @@
 		<script type="text/javascript" language="javascript" src="../../js/jquery.dataTables.js"></script>
 		<script type="text/javascript" charset="utf-8">
 			$(document).ready(function() {
+				var oTable = $('#example').dataTable();
 				var iStart = new Date().getTime();
 				
-				if ( typeof console != 'undefined' ) {
-					console.profile();
+				//if ( typeof console != 'undefined' ) {
+				//	console.profile();
+				//}
+				for ( var i=0 ; i<10 ; i++ )
+				{
+					var oTable = $('#example').dataTable({"bDestroy": true});
 				}
-				var oTable = $('#example').dataTable();
-				if ( typeof console != 'undefined' ) {
-					console.profileEnd();
-				}
+				//if ( typeof console != 'undefined' ) {
+				//	console.profileEnd();
+				//}
+				
+				//oTable.fnSort( [[ 1, 'asc' ]] );
+				//oTable.fnSort( [[ 1, 'asc' ]] );
+				//oTable.fnSort( [[ 2, 'asc' ]] );
+				//oTable.fnSort( [[ 1, 'asc' ]] );
+				//oTable.fnSort( [[ 2, 'asc' ]] );
 				
 				var iEnd = new Date().getTime();
-				document.getElementById('output').innerHTML = "Test took "+(iEnd-iStart)+"mS";
+				document.getElementById('output').innerHTML = "Test took "+(iEnd-iStart)+" mS";
 			} );
 		</script>
 	</head>
@@ -81,7 +91,6 @@
 		echo '<td>'.$aRow['country'].'</td>';
 		echo '<td>'.$aRow['zip2'].'</td>';
 		echo '</tr>';
-		
 	}
 ?>
 	</tbody>

@@ -17,18 +17,18 @@ $(document).ready( function () {
 	
 	
 	oTest.fnTest( 
-		"One argument passed (for DOM!)",
+		"Two arguments passed",
 		function () {
 			oSession.fnRestore();
 			
 			mPass = -1;
 			$('#example').dataTable( {
 				"fnInitComplete": function ( ) {
-					mPass = arguments.length;
+					mPass = arguments.length===2 && arguments[1]===undefined;
 				}
 			} );
 		},
-		function () { return mPass == 1; }
+		function () { return mPass; }
 	);
 	
 	
@@ -70,6 +70,22 @@ $(document).ready( function () {
 			$('#example_next').click();
 		},
 		function () { return mPass == 1; }
+	);
+	
+	
+	oTest.fnWaitTest( 
+		"10 rows in the table on complete",
+		function () {
+			oSession.fnRestore();
+			
+			mPass = 0;
+			$('#example').dataTable( {
+				"fnInitComplete": function ( ) {
+					mPass = $('#example tbody tr').length;
+				}
+			} );
+		},
+		function () { return mPass == 10; }
 	);
 	
 	

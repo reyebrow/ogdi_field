@@ -1,6 +1,6 @@
 /*
  * File:        KeyTable.js
- * Version:     1.1.5
+ * Version:     1.1.7
  * CVS:         $Idj$
  * Description: Keyboard navigation for HTML tables
  * Author:      Allan Jardine (www.sprymedia.co.uk)
@@ -11,8 +11,12 @@
  * Project:     Just a little bit of fun :-)
  * Contact:     www.sprymedia.co.uk/contact
  * 
- * Copyright 2009-2010 Allan Jardine, all rights reserved.
+ * Copyright 2009-2011 Allan Jardine, all rights reserved.
  *
+ * This source file is free software, under either the GPL v2 license or a
+ * BSD style license, available at:
+ *   http://datatables.net/license_gpl2
+ *   http://datatables.net/license_bsd
  */
 
 
@@ -99,7 +103,7 @@ function KeyTable ( oInit )
 		{
 			_fnSetFocus( _fnCellFromCoords(x, y) );
 		}
-	}
+	};
 	
 	
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -409,11 +413,13 @@ function KeyTable ( oInit )
 		
 		/* Add the new class to highlight the focused cell */
 		jQuery(nTarget).addClass( _sFocusClass );
+		jQuery(nTarget).parent().addClass( _sFocusClass );
 		
 		/* If it's a DataTable then we need to jump the paging to the relevant page */
+		var oSettings;
 		if ( _oDatatable )
 		{
-			var oSettings = _oDatatable.fnSettings();
+			oSettings = _oDatatable.fnSettings();
 			var iRow = _fnFindDtCell( nTarget )[1];
 			var bKeyCaptureCache = _bKeyCapture;
 			
@@ -462,16 +468,27 @@ function KeyTable ( oInit )
 		_iOldX = aNewPos[0];
 		_iOldY = aNewPos[1];
 		
+		var iViewportHeight, iViewportWidth, iScrollTop, iScrollLeft, iHeight, iWidth, aiPos;
 		if ( bAutoScroll )
 		{
 			/* Scroll the viewport such that the new cell is fully visible in the rendered window */
-			var iViewportHeight = document.documentElement.clientHeight;
-			var iViewportWidth = document.documentElement.clientWidth;
-			var iScrollTop = document.body.scrollTop || document.documentElement.scrollTop;
-			var iScrollLeft = document.body.scrollLeft || document.documentElement.scrollLeft;
-			var iHeight = nTarget.offsetHeight;
-			var iWidth = nTarget.offsetWidth;
-			var aiPos = _fnGetPos( nTarget );
+			iViewportHeight = document.documentElement.clientHeight;
+			iViewportWidth = document.documentElement.clientWidth;
+			iScrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+			iScrollLeft = document.body.scrollLeft || document.documentElement.scrollLeft;
+			iHeight = nTarget.offsetHeight;
+			iWidth = nTarget.offsetWidth;
+			aiPos = _fnGetPos( nTarget );
+			
+			/* Take account of scrolling in DataTables 1.7 - remove scrolling since that would add to
+			 * the positioning calculation
+			 */
+			if ( _oDatatable && typeof oSettings.oScroll != 'undefined' &&
+			  (oSettings.oScroll.sX !== "" || oSettings.oScroll.sY !== "") )
+			{
+				aiPos[1] -= $(oSettings.nTable.parentNode).scrollTop();
+				aiPos[0] -= $(oSettings.nTable.parentNode).scrollLeft();
+			}
 			
 			/* Correct viewport positioning for vertical scrolling */
 			if ( aiPos[1]+iHeight > iScrollTop+iViewportHeight )
@@ -497,6 +514,42 @@ function KeyTable ( oInit )
 				_fnSetScrollLeft( aiPos[0] );
 			}
 		}
+		
+		/* Take account of scrolling in DataTables 1.7 */
+		if ( _oDatatable && typeof oSettings.oScroll != 'undefined' &&
+		  (oSettings.oScroll.sX !== "" || oSettings.oScroll.sY !== "") )
+		{
+			var dtScrollBody = oSettings.nTable.parentNode;
+			iViewportHeight = dtScrollBody.clientHeight;
+			iViewportWidth = dtScrollBody.clientWidth;
+			iScrollTop = dtScrollBody.scrollTop;
+			iScrollLeft = dtScrollBody.scrollLeft;
+			iHeight = nTarget.offsetHeight;
+			iWidth = nTarget.offsetWidth;
+			
+			/* Correct for vertical scrolling */
+			if ( nTarget.offsetTop + iHeight > iViewportHeight+iScrollTop )
+			{
+				dtScrollBody.scrollTop = (nTarget.offsetTop + iHeight) - iViewportHeight;
+			}
+			else if ( nTarget.offsetTop < iScrollTop )
+			{
+				dtScrollBody.scrollTop = nTarget.offsetTop;
+			}
+			
+			/* Correct for horizontal scrolling */
+			if ( nTarget.offsetLeft + iWidth > iViewportWidth+iScrollLeft )
+			{
+				dtScrollBody.scrollLeft = (nTarget.offsetLeft + iWidth) - iViewportWidth;
+			}
+			else if ( nTarget.offsetLeft < iScrollLeft )
+			{
+				dtScrollBody.scrollLeft = nTarget.offsetLeft;
+			}
+		}
+
+		/* Focused - so we want to capture the keys */
+		_fnCaptureKeys();
 		
 		/* Fire of the focus event if there is one */
 		_fnEventFire( "focus", _iOldX, _iOldY );
@@ -528,6 +581,7 @@ function KeyTable ( oInit )
 	function _fnRemoveFocus( nTarget )
 	{
 		jQuery(nTarget).removeClass( _sFocusClass );
+		jQuery(nTarget).parent().removeClass( _sFocusClass );
 		_fnEventFire( "blur", _iOldX, _iOldY );
 	}
 	
@@ -621,7 +675,10 @@ function KeyTable ( oInit )
 				{
 					/* Only lose focus if there isn't an escape handler on the cell */
 					_fnBlur();
+					return;
 				}
+				x = _iOldX;
+				y = _iOldY;
 				break;
 			
 			case -1:
@@ -920,6 +977,8 @@ function KeyTable ( oInit )
 		
 		if ( typeof oInit.table == 'undefined' ) {
 			oInit.table = jQuery('table.KeyTable')[0];
+		} else {
+			$(oInit.table).addClass('KeyTable');
 		}
 		
 		if ( typeof oInit.focusClass != 'undefined' ) {
@@ -1020,11 +1079,11 @@ function KeyTable ( oInit )
 		
 		if ( _oDatatable )
 		{
-			jQuery('td', _oDatatable.fnGetNodes()).click( _fnClick );
+			jQuery('tbody td', _oDatatable.fnSettings().nTable).live( 'click', _fnClick );
 		}
 		else
 		{
-			jQuery('td', _nBody).click( _fnClick );
+			jQuery('td', _nBody).live( 'click', _fnClick );
 		}
 		
 		/* Loose table focus when click outside the table */

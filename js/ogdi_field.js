@@ -5,48 +5,55 @@
   //==========================================//
   Drupal.behaviors.buildTabs = {
     attach: function (context, settings) {
-      if($('#ogdi-wrapper').length > 0) {
+      if($('.ogdi-wrapper').length > 0) {
         
         //==========================================//
-        // BUILDING THE MAP
+        // BUILDING THE MAP(s)
         //==========================================//
-        var url = $('#bing-map').text();
-        var fields = Drupal.settings.ogdi_field.description.split(',');
-        $('#bing-map').gmap({'credentials': 'AoMbZ1CHE4fV_eihmcvW8m19IT4Gbn2oago4voVygVsAWwM8nN0aEmOen1Tc68xa', 'enableSearchLogo': false}).bind('init', function() {
-        	$.getJSON(url, function(response) {
-        		$.each(response.d, function(i, obj) {
-              var description = '';  
-              for(field in fields) {
-                description = description + obj[fields[field]] + '<br />';
-              }        
-        			// Get our location from the fields we defined as lat long in the module
-              var location = new Microsoft.Maps.Location(obj[Drupal.settings.ogdi_field.latitude], obj[Drupal.settings.ogdi_field.longitude]);
-              // Add markers at our location
-        			$('#bing-map').gmap('addMarker', { 'location': location, 'bounds': true } )
-        			.click(function() {
-                // Set up the marker/pin information...
-        				$('#ogdi-map #bing-map').gmap('openInfoWindow', { 
-        					'title': obj[Drupal.settings.ogdi_field.title],
-                  'description': description //obj[Drupal.settings.ogdi_field.description]
-        				}, this);
-        			});
-        		});
-        	});
+        $('.bing-map').each(function(v,e) { // Loop through all map elements on the page...
+          var url = $(this).text(); // Get the OGDI URL that will return JSON...
+          var fields = Drupal.settings.ogdi_field[v].description.split(',');  // Get the fields that will be displayed on the markers...
+          $('#ogdi-map-' + v).gmap({'credentials': 'AoMbZ1CHE4fV_eihmcvW8m19IT4Gbn2oago4voVygVsAWwM8nN0aEmOen1Tc68xa', 'enableSearchLogo': false}).bind('init', function() {  // Attach the Bing Map...
+          	$.getJSON(url, function(response) {  // Query the URL to get back JSON...
+          		$.each(response.d, function(i, obj) { // Loop through the JSON...
+                var description = '';  
+                for(field in fields) {
+                  description = description + obj[fields[field]] + '<br />';  // Set the description field from the comma separated values...
+                }        
+          			// Get our location from the fields we defined as lat long in the module
+                var location = new Microsoft.Maps.Location(obj[Drupal.settings.ogdi_field[v].latitude], obj[Drupal.settings.ogdi_field[v].longitude]);  // Create a new location for a marker...
+                // Add markers at our location
+          			$('#ogdi-map-' + v).gmap('addMarker', { 'location': location, 'bounds': true } ) // Add a marker and a popup for that marker...
+          			.click(function() {
+                  // Set up the marker/pin information...
+          				$('#ogdi-map-' + v).gmap('openInfoWindow', { 
+          					'title': obj[Drupal.settings.ogdi_field[v].title],
+                    'description': description //obj[Drupal.settings.ogdi_field.description]
+          				}, this);
+          			});
+          		});
+          	});
+          });
         });
-
+        
         // Create the tabs...   
-        $("#ogdi-tabs").tabs();
+        $('.ogdi-tabs').tabs();
         
         // Build the datagrid...
-        $('#ogdi-datagrid').dataTable({
-          "bJQueryUI": true,  // Add support for jQueryUI...
-          "bAutoWidth": true, // Allow it's width to be automatic...
-          "sPaginationType": "full_numbers",  // Use full numbers for pagination...
-          "sScrollX": "100%", // Provide a horizontal scrollbar...
-          "bScrollCollapse": true,
-          "bRetrieve" : true
-        });
-
+        $('.ogdi-datagrid').not('.processed')
+          .each(function(i,e){
+            $(this).addClass('processed');  // Handle the reloading issues by adding a process class...
+          }).
+          dataTable({
+            "bJQueryUI": true,  // Add support for jQueryUI...
+            "bAutoWidth": false, // Allow it's width to be automatic...
+            "bProcessing": true,
+            "bStateSave": true,
+            "sPaginationType": "full_numbers",  // Use full numbers for pagination...
+            "sScrollX": "100%", // Provide a horizontal scrollbar...
+            "bScrollCollapse": true,
+            "bRetrieve" : true,
+          });
       }
     }
   }

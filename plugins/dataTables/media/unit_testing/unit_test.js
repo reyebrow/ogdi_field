@@ -29,7 +29,7 @@ var oTest = {
 	iReTestLimit: 20,
 	
 	/* Amount of time to wait between trying for an async test */
-	iReTestDelay: 100,
+	iReTestDelay: 150,
 	
 	/* End tests - external control */
 	bEnd: false,
@@ -101,6 +101,21 @@ var oTest = {
 	{
 		this._bFinished = true;
 		this._fnNext();
+	},
+	
+	/*
+	 * Function: fnCookieDestroy
+	 * Purpose:  Destroy a cookie of a given name
+	 * Returns:  -
+	 * Inputs:   -
+	 */
+	"fnCookieDestroy": function ( oTable )
+	{
+		var sName = oTable.fnSettings().sCookiePrefix+oTable.fnSettings().sInstance;
+		var aParts = window.location.pathname.split('/');
+		var sNameFile = sName + '_' + aParts.pop().replace(/[\/:]/g,"").toLowerCase();
+		document.cookie = sNameFile+"=; expires=Thu, 01-Jan-1970 00:00:01 GMT; path="+
+			aParts.join('/') + "/";
 	},
 	
 	
@@ -372,7 +387,11 @@ var oSession = {
 	{
 		while( $.fn.dataTableSettings.length > 0 )
 		{
-			$.fn.dataTableSettings[0].oInstance.fnDestroy();
+			try {
+				$.fn.dataTableSettings[0].oInstance.fnDestroy();
+			} catch (e) {
+				$.fn.dataTableSettings.splice( 0, 1 );
+			}
 		}
 		//$.fn.dataTableSettings.splice( 0, $.fn.dataTableSettings.length );
 		var nDemo = document.getElementById('demo');
