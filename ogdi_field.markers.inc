@@ -3,19 +3,8 @@
 /**
  * @file
  *
- * Functions that return data used in the poutine_maker field.
+ * Functions that return data used in the ogdi_field field.
  *
- * @see https://github.com/tarmstrong/poutine_maker where this example was taken from.
- */
-
-/**
- * Return an array in the form
- *
- * array(
- *   'sweet_potato' => 'Sweet Potato',
- *   'tomato' => 'Tomato',
- *   ...
- * );
  */
 
 function ogdi_field_markers() {

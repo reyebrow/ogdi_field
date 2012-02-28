@@ -16,13 +16,46 @@ define('OGDI_URL_MAX_LENGTH', 2048);
 
 
 /**
+ * Implements hook_menu().
+ */
+function ogdi_field_menu() {
+  // Bing Map settings.
+  $items['admin/config/services/bing'] = array(
+    'title' => 'OGDI field - Bing Maps API',
+    'description' => 'OGDI field - Bing Maps API.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ogdi_field_admin_settings'),
+    'access arguments' => array('access administration pages'),
+  );
+  return $items;
+}
+
+
+/**
+ * @function
+ * OGDI Field Bing Map API settings form
+ */
+function ogdi_field_admin_settings($form, &$form_state) {
+  $form['ogdi_bing']['bingmaps_api_key'] = array(
+    '#title' => 'Bing Maps API Key',
+    '#type' => 'textfield',
+    '#default_value' => variable_get('bingmaps_api_key', ''),
+    '#description' => t('Enter you Bing Maps API key here. If you do not have one, please sign up for one at ' . l('http://www.bingmapsportal.com', 'http://www.bingmapsportal.com')),
+    '#size' => 50,
+    '#maxlength' => 255,
+  );
+  return system_settings_form($form);
+}
+
+
+/**
  * Implements hook_theme().
  */
 function ogdi_field_theme() {
   return array(
     // Themes for the formatters.
     'ogdi_field_formatter_default' => array(
-      'variables' => array('display_url' => NULL, 'delta' => NULL, 'markers' => NULL),
+      'variables' => array('display_url' => NULL, 'delta' => NULL, 'markers' => NULL, 'field' => NULL),
       'file' => 'ogdi_field_formatter.inc',
     ),
     'ogdi_field_formatter_plain' => array(
@@ -101,29 +134,30 @@ function ogdi_field_field_info() {
  *
  */
 function ogdi_field_field_settings_form($field, $instance, $has_data) {
-
   $settings = $field['settings'];
   $form = array();
-
   $form['ogdi_field_label'] = array(
     '#type'   =>  'textfield',
     '#title'  =>  t('Label'),
-    '#default_value' => $settings['ogdi_field_label'],
+    '#default_value' => !empty($settings['ogdi_field_label']) ? t($settings['ogdi_field_label']) : t('Filter expression ($filter)'),
     '#description'  =>  t('The value for the label of the Filter box on the dataset page.'),
   );
   
   $form['ogdi_field_description'] = array(
     '#type'   =>  'textarea',
     '#title'  =>  t('Description'),
-    '#default_value' => $settings['ogdi_field_description'],
+    '#default_value' => !empty($settings['ogdi_field_description']) ? $settings['ogdi_field_description'] : t('Use this box to write expressions that will filter the data below.'),
     '#description'  =>  t('The description which appears under/next to the Filter box on the dataset page. This is usually the OGDI filter documentation.'),
     '#rows'   => 20,
   );
+
+  // Load in default helptext
+  $filter_helptext = file_get_contents(drupal_get_path('module', 'ogdi_field') . '/ogdi_field_helptext.txt');
   
   $form['ogdi_field_helptext'] = array(
     '#type'   =>  'textarea',
     '#title'  =>  t('Help Text'),
-    '#default_value' => $settings['ogdi_field_helptext'],
+    '#default_value' => !empty($settings['ogdi_field_helptext']) ? t($settings['ogdi_field_helptext']) : t($filter_helptext),
     '#description'  =>  t('The help text that will appear enclosed in a tooltip to the right of the filter textarea.'),
     '#rows'   => 20,
   );
@@ -278,7 +312,11 @@ function ogdi_field_field_widget_form(&$form, &$form_state, $field, $instance, $
       //'#options' => $options,
     );
   }
-
+  
+  // Set some specific values...
+  $element['markers']['title']['#default_value'] = isset($item['markers']['title']) ? $item['markers']['title'] : 'PartitionKey';
+  $element['markers']['latitude']['#default_value'] = isset($item['markers']['latitude']) ? $item['markers']['latitude'] : 'latitude';
+  $element['markers']['longitude']['#default_value'] = isset($item['markers']['latitude']) ? $item['markers']['longitude'] : 'longitude';
   $element['markers']['description']['#description'] = t('Please enter the name of a columns/header from the data table. You can also enter multiple values separated by a comma with no spaces, eg. city,address,postal_code');
 
   return $element;
@@ -400,6 +438,7 @@ function ogdi_field_field_formatter_view($entity_type, $entity, $field, $instanc
           '#display_url' => $item['url'],
           '#delta'  => $delta,
           '#markers' => $item['markers'],
+          '#field' => $field,
           '#theme' => 'ogdi_field_formatter_default',
         );
       }
@@ -479,8 +518,7 @@ function ogdi_field_get_metadata($ogdi) {
   return $results;
 }
 
-function ogdi_field_get_metadata_callback($form, $form_state) {
-  //watchdog('ogdi', '<pre> Form:' . print_r($form['field_colin_ogdi']['und'][0], TRUE) . '</pre>');
+/*function ogdi_field_get_metadata_callback($form, $form_state) {
   $field_name = $form_state['triggering_element']['#array_parents'][0];
   $delta = trim($form_state['clicked_button']['#name'] , 'button-');
   $items = $form[$field_name][$form['#node']->language][$delta];
@@ -498,8 +536,7 @@ function ogdi_field_get_metadata_callback($form, $form_state) {
   $form[$field_name][$form['#node']->language][$delta]['markers']['longitude']['#options'] = $options;
 
   return drupal_render($form[$field_name][$form['#node']->language][$delta]['markers']);
-//  return '<pre>' . kpr($delta, TRUE) . '</pre>';
-}
+}*/
 
 /**
  * Function to retrieve the full data of a certain dataset from OGDI.
@@ -615,6 +652,10 @@ function ogdi_field_data_form($form, $form_state, $variables) {
   $form = array();
   $delta = $variables['delta'];
   
+  // Get the field settings. I had to pass the field through the formatter to get it back in here. 
+  $field = field_info_field_by_id($variables['field']['id']);
+  $settings = $field['settings'];
+
   $form['query'] = array(
     '#title' => t('Filter the dataset'),
     '#type' => 'fieldset',
@@ -624,13 +665,13 @@ function ogdi_field_data_form($form, $form_state, $variables) {
   
   $form['query']['filter'] = array(
     '#type'         =>  'textarea',
-    '#title'        =>  'Filter',//$field['filter_label'],
-    '#description'  =>  'Description',//$field['filter_description'],
+    '#title'        =>  $settings['ogdi_field_label'],
+    '#description'  =>  $settings['ogdi_field_description'],
     //'#element_validate' =>  array('ogdi_field_filter_validate')
   );
   
   $form['query']['helptext'] = array(
-    '#value'        =>  'Helptext',//$field['filter_helptext'],
+    '#value'        =>  $settings['ogdi_field_helptext'],
     '#theme'        =>  'ogdi_field_helptext'
   );
 

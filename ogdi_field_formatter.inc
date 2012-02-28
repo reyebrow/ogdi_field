@@ -20,27 +20,27 @@ function theme_ogdi_field_formatter_default($variables) {
   $output = '';
   // If there is a dataset to load 
   if (!empty($variables['display_url'])) {
-    if($variables['delta'] > 0) { 
-      /* Add the necessary javascript and css files...*/
-      /* Jquery UI */
-      drupal_add_library('system', 'ui.tabs');
-      drupal_add_library('system', 'ui.dialog');
+    /* Add the necessary javascript and css files...*/
+    /* Jquery UI */
+    drupal_add_library('system', 'ui.tabs');
+    drupal_add_library('system', 'ui.dialog');
+
+    /* DataTables CSS and JS */
+    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/js/jquery.dataTables.min.js', array('type' => 'file', 'group' => JS_LIBRARY));
+    drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table.css', array('type' => 'file', 'media' => 'all'));
+    drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table_jui.css', array('type' => 'file', 'media' => 'all', 'group' => JS_LIBRARY));
   
-      /* DataTables CSS and JS */
-      drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/js/jquery.dataTables.min.js', array('type' => 'file', 'group' => JS_LIBRARY));
-      drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table.css', array('type' => 'file', 'media' => 'all'));
-      drupal_add_css(drupal_get_path('module', 'ogdi_field') .'/plugins/dataTables/media/css/demo_table_jui.css', array('type' => 'file', 'media' => 'all', 'group' => JS_LIBRARY));
-    
-      /* Add bing maps stuff */
-      drupal_add_js('http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header'));
-      drupal_add_js('http://jquery-bing-maps.googlecode.com/svn/trunk/js/min/jquery.ui.bmap.min.js', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header'));
-      
-      /* OGDI Stuff */
-      drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/js/ogdi_field.js', array('type' => 'file', 'scope' => 'footer'));
-      drupal_add_css(drupal_get_path('module', 'ogdi_field') ."/css/ogdi_field.css", array('type' => 'file', 'media' => 'all'));
-    }
+    /* Add bing maps stuff */
+    drupal_add_js('http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header', 'weight' => 20));
+    drupal_add_js('http://jquery-bing-maps.googlecode.com/svn/trunk/js/min/jquery.ui.bmap.min.js', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header', 'weight' => 21));
+    drupal_add_js('http://jquery-bing-maps.googlecode.com/svn/trunk/js/jquery.ui.bmap.extensions.js', array('type' => 'external', 'group' => JS_LIBRARY, 'scope' => 'header', 'weight' => 22));
+
+    /* OGDI Stuff */
+    drupal_add_js(drupal_get_path('module', 'ogdi_field') .'/js/ogdi_field.js', array('type' => 'file', 'scope' => 'footer'));
+    drupal_add_css(drupal_get_path('module', 'ogdi_field') ."/css/ogdi_field.css", array('type' => 'file', 'media' => 'all'));
     
     // Set the field markers as setting variables so that we can retrieve what fields we want to add to the markers...
+    // Set the bing maps api key...
     drupal_add_js(array(
       'ogdi_field' => array(
         $variables['delta'] => array(
@@ -49,7 +49,8 @@ function theme_ogdi_field_formatter_default($variables) {
           'latitude' => $variables['markers']['latitude'],
           'longitude' => $variables['markers']['longitude']
           ),
-        )
+        ),
+      'bingmaps_api_key' => variable_get('bingmaps_api_key', ''),
       ), 'setting'
     );
   
@@ -80,7 +81,7 @@ function theme_ogdi_field_formatter_default($variables) {
     $rows = ogdi_field_build_table($data->d, $headers, $variables['delta']);
         
     // Build the OGDI data form...
-    $form_variables = array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters, 'delta' => $variables['delta']);
+    $form_variables = array('ogdi' => $ogdi, 'headers' => $headers, 'rows' => $rows, 'parameters' => $parameters, 'delta' => $variables['delta'], 'field' => $variables['field']);
     $form = drupal_get_form('ogdi_field_data_form', $form_variables);
     $output .= drupal_render($form);
   } 
@@ -134,6 +135,7 @@ function theme_ogdi_field_container($variables) {
  * Theme function for the OGDI data grid
  */
 function theme_ogdi_field_datatable($variables) {
+  // We want to create our querystring, however we want to remove 'json' from it...
   foreach ($variables['parameters'] as $key => $value) {
     if ($value == 'json') {
       continue;
@@ -142,12 +144,11 @@ function theme_ogdi_field_datatable($variables) {
   }
 
   $output = '';
-  //kpr($variables);
   // Output the Path to the ATOM Feed API
   $output .= theme('ogdi_field_atom_link', array('datasource' => $variables['datasource'], 'dataset_id' => $variables['dataset_id'], 'querystring' => $querystring));
 
   // Output the Download select box
- // $output .= theme('ogdi_field_download_link', $datasource, $dataset_id, $querystring);
+  //$output .= theme('ogdi_field_download_link', array('datasource' => $variables['datasource'], 'dataset_id' => $variables['dataset_id'], 'querystring' => $querystring));
   
   // If no data is returned...
   if (count($variables['rows']) == 0) {
@@ -177,8 +178,6 @@ function theme_ogdi_field_map($variables) {
   $querystring = implode('&', $string);
   
   $output = '';
-  // Output the Path to the ATOM Feed API
-  // $output .= theme('ogdi_field_atom_link', $datasource, $dataset_id, $querystring);
 
   $output .= '<div class="bing-map" id="ogdi-map-'. $variables['delta'] . '">';
   $output .= $variables['datasource'] . '/' . $variables['dataset_id'] .'?'. $querystring .'&callback=?';
@@ -210,8 +209,7 @@ function theme_ogdi_field_helptext($field) {
  */
 function theme_ogdi_field_atom_link($variables) {
   // Output the Path to the ATOM Feed API
-  //kpr($variables);
-  $url = url($variables['datasource'] . '/' . $variables['dataset_id'], $options = array('html' => TRUE, 'query' => $querystring));
+  $url = url($variables['datasource'] . '/' . $variables['dataset_id'], $options = array('absolute' => TRUE, 'html' => TRUE, 'query' => $variables['querystring']));
   $output .= '<p>' . urldecode(t('Full query URL: !url', array('!url' => l($url, $url, $options = array('html' => TRUE)))));
   $output .= t(' (Click to view results as XML/Atom)') . '</p>';
 
@@ -222,7 +220,7 @@ function theme_ogdi_field_atom_link($variables) {
 /**
  * Theme function to output the select field for choosing the type of file format to download the visible data
  */
-function theme_ogdi_field_download_link($datasource, $dataset_id, $querystring) {
+function theme_ogdi_field_download_link($variables) {
   
   $output .= l('Download', '');
   $form['download']['filetypes'] = array(
@@ -238,55 +236,4 @@ function theme_ogdi_field_download_link($datasource, $dataset_id, $querystring) 
   );
   $output .= drupal_render($form['download']);
   return $output;
-}
-
-
-/**
- * Function to build the OGDI filter form that will run queries on the page
- */
-function ogdi_field_filter_form($form, &$form_state, $ogdi, $element) {
-  // Get the current field so that we can set the titles and descriptions on form elements...
-  //$field = content_fields($element['#field_name']);
-  $form['query'] = array(
-    '#title' => t('Filter the dataset'),
-    '#type' => 'fieldset',
-    '#collapsed' => TRUE,
-    '#collapsible' => TRUE
-  );  
-  
-  $form['query']['filter'] = array(
-    '#type'         =>  'textarea',
-    '#title'        =>  'Filter',//$field['filter_label'],
-    '#description'  =>  'Description',//$field['filter_description'],
-    //'#element_validate' =>  array('ogdi_field_filter_validate')
-  );
-  
-  $form['query']['helptext'] = array(
-    '#value'        =>  'Helptext',//$field['filter_helptext'],
-    '#theme'        =>  'ogdi_field_helptext'
-  );
-    
-  $form['query']['datasource'] = array(
-    '#type'   => 'hidden',
-    '#value'  => $ogdi->datasource
-  );
-  
-  $form['query']['dataset_id'] = array(
-    '#type'   => 'hidden',
-    '#value'  => $ogdi->dataset_id
-  );
-  
-  // On submit we want to run an ajax callback...
-  $form['query']['submit'] = array(
-    '#type'   =>  'submit',
-    '#value'  =>  t('Run'),
-    '#ajax' => array(
-      'callback' => 'ogdi_field_filter_callback',  // See hook_menu for this...
-      'wrapper' => 'ogdi-wrapper',
-      'progress' => array('type' => 'throbber', 'message' => t('Please wait...')),
-      'method' =>  'replace',
-      'effect' =>  'fade'
-     ), 
-  );
-  return $form;
 }
